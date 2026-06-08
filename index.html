@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 作业批改 MVP</title>
+    <link
+      rel="icon"
+      href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23008f7a"/><text x="32" y="41" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="white">AI</text></svg>'
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">AI</div>
+          <div>
+            <strong>作业批改</strong>
+            <span>真实上传 MVP</span>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="workspace" type="button">
+            <span class="nav-icon">↑</span>
+            <span>上传批改</span>
+          </button>
+          <button class="nav-item" data-view="results" type="button">
+            <span class="nav-icon">✓</span>
+            <span>批改结果</span>
+          </button>
+          <button class="nav-item" data-view="analytics" type="button">
+            <span class="nav-icon">⌁</span>
+            <span>学情分析</span>
+          </button>
+          <button class="nav-item" data-view="format" type="button">
+            <span class="nav-icon">?</span>
+            <span>文件格式</span>
+          </button>
+        </nav>
+
+        <section class="sidebar-panel">
+          <span class="panel-label">运行模式</span>
+          <strong>本地</strong>
+          <p>文件只在浏览器中读取和批改，不上传到服务器。</p>
+        </section>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">MVP · 可上传 · 可批改 · 可分析</p>
+            <h1>AI 作业批改工作台</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="secondary-button" id="loadExample" type="button">载入示例文件</button>
+            <button class="primary-button" id="runGrading" type="button">运行批改</button>
+          </div>
+        </header>
+
+        <section class="view active" id="workspace">
+          <div class="metrics-grid" id="metricsGrid"></div>
+
+          <div class="content-grid">
+            <section class="panel">
+              <div class="section-heading">
+                <div>
+                  <span class="panel-label">第一步</span>
+                  <h2>上传参考答案或评分规则</h2>
+                </div>
+                <span class="status-pill" id="referenceStatus">未上传</span>
+              </div>
+              <label class="file-drop" for="referenceFile">
+                <input id="referenceFile" type="file" accept=".json,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.pdf,.zip" />
+                <span>选择参考答案文件</span>
+                <strong id="referenceName">支持手写/打印答案图片、PDF、ZIP、JSON、CSV、TXT</strong>
+              </label>
+              <p class="helper-text">
+                自动批改题需要答案；老师手写在试卷上的参考答案也可以上传，但低置信 OCR 需要人工确认。
+              </p>
+              <div class="extract-progress" id="referenceProgress" hidden></div>
+            </section>
+
+            <section class="panel">
+              <div class="section-heading">
+                <div>
+                  <span class="panel-label">第二步</span>
+                  <h2>上传学生作业</h2>
+                </div>
+                <span class="status-pill" id="submissionStatus">未上传</span>
+              </div>
+              <label class="file-drop" for="submissionFile">
+                <input id="submissionFile" type="file" accept=".json,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.pdf,.zip" />
+                <span>选择学生作业文件</span>
+                <strong id="submissionName">支持多学生作答；ZIP/图片/PDF 会先 OCR</strong>
+              </label>
+              <p class="helper-text">
+                当前 MVP 支持 ZIP 多页图片、图片/PDF OCR；手写和复杂版面可能需要教师复核。
+              </p>
+              <div class="extract-progress" id="submissionProgress" hidden></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="section-heading">
+              <div>
+                <span class="panel-label">解析预览</span>
+                <h2>题目、学生和批改模式</h2>
+              </div>
+              <button class="secondary-button" id="clearAll" type="button">清空</button>
+            </div>
+            <div class="preview-grid">
+              <div>
+                <h3>题目列表</h3>
+                <div class="compact-list" id="questionPreview"></div>
+              </div>
+              <div>
+                <h3>学生列表</h3>
+                <div class="compact-list" id="studentPreview"></div>
+              </div>
+            </div>
+            <div class="ocr-preview" id="ocrPreview"></div>
+          </section>
+        </section>
+
+        <section class="view" id="results">
+          <section class="panel">
+            <div class="section-heading">
+              <div>
+                <span class="panel-label">批改结果</span>
+                <h2>按学生查看分数、证据和教师复核点</h2>
+              </div>
+              <div class="topbar-actions">
+                <select id="studentSelect" class="select-control" aria-label="选择学生"></select>
+                <button class="secondary-button" id="downloadReport" type="button">导出报告</button>
+              </div>
+            </div>
+            <div id="studentSummary" class="summary-strip"></div>
+            <div id="resultList" class="result-list"></div>
+          </section>
+        </section>
+
+        <section class="view" id="analytics">
+          <div class="analytics-grid">
+            <section class="panel">
+              <div class="section-heading">
+                <div>
+                  <span class="panel-label">班级分析</span>
+                  <h2>共性问题和知识点薄弱项</h2>
+                </div>
+              </div>
+              <div id="analysisList" class="insight-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="section-heading">
+                <div>
+                  <span class="panel-label">教师复核队列</span>
+                  <h2>需要人工确认的题目</h2>
+                </div>
+              </div>
+              <div id="reviewQueue" class="compact-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="format">
+          <section class="panel">
+            <div class="section-heading">
+              <div>
+                <span class="panel-label">文件格式</span>
+                <h2>可直接复制使用的 MVP 格式</h2>
+              </div>
+            </div>
+
+            <div class="format-grid">
+              <article>
+                <h3>参考答案 JSON</h3>
+                <pre><code>[
+  {
+    "id": "q1",
+    "subject": "数学",
+    "type": "choice",
+    "title": "选择正确答案",
+    "answer": "B",
+    "score": 2
+  },
+  {
+    "id": "q2",
+    "subject": "语文",
+    "type": "essay",
+    "title": "那一刻，我长大了",
+    "score": 50,
+    "keywords": ["长大", "责任", "感受"],
+    "rubric": ["中心明确", "事例具体", "结尾点题"]
+  }
+]</code></pre>
+              </article>
+
+              <article>
+                <h3>学生作业 JSON</h3>
+                <pre><code>[
+  {
+    "student": "李同学",
+    "answers": {
+      "q1": "B",
+      "q2": "我照顾生病的妈妈，第一次明白责任。"
+    }
+  }
+]</code></pre>
+              </article>
+
+              <article>
+                <h3>答题卡 OCR 支持格式</h3>
+                <pre><code>姓名：李同学
+1. B
+2. 42
+3. 那天妈妈发烧了，我第一次明白责任。
+4. 工业革命提高生产力，推动城市化。
+
+也支持 ZIP：
+student-01.png
+student-02.png
+student-03.pdf</code></pre>
+              </article>
+
+              <article>
+                <h3>ZIP / 图片 / PDF 参考答案建议版式</h3>
+                <pre><code>参考答案
+1. B
+2. 42
+3. 作文题：评分点：中心明确、事例具体、结尾点题
+4. 历史题：评分点：生产力、城市化、工人阶级、社会问题
+
+ZIP 文件：
+paper-01.png
+paper-02.png
+answer-page.png</code></pre>
+              </article>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js?v=20260605-assist-exact-score"></script>
+  </body>
+</html>

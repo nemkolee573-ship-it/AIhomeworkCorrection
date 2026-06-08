@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "api_url": "https://api.openai.com/v1/chat/completions",
+  "model": "gpt-4o-mini",
+  "api_key_env": "OPENAI_API_KEY",
+  "api_key": "",
+  "local_model": {
+    "enabled": true,
+    "provider": "ollama",
+    "api_url": "http://127.0.0.1:11434/api/chat",
+    "model": "qwen2.5vl:7b",
+    "vision_enabled": true,
+    "vision_model": "qwen2.5vl:7b"
+  }
+}
