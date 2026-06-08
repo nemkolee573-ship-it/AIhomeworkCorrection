@@ -1822,8 +1822,15 @@ class Handler(SimpleHTTPRequestHandler):
     def request_path(self):
         return urllib.parse.urlparse(self.path).path
 
+    def is_local_request(self):
+        client_host = self.client_address[0] if self.client_address else ""
+        host = (self.headers.get("Host") or "").split(":", 1)[0].strip().lower()
+        return client_host in ("127.0.0.1", "::1", "localhost") or host in ("127.0.0.1", "::1", "localhost")
+
     def is_authenticated(self):
         if not is_access_control_enabled():
+            return True
+        if self.is_local_request():
             return True
         cookies = parse_cookie_header(self.headers.get("Cookie"))
         return cookies.get(ACCESS_COOKIE_NAME) == build_access_token()
